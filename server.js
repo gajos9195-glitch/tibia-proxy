@@ -11,6 +11,9 @@ const HEADERS = {
     "Connection": "keep-alive"
 };
 
+// ----------------------
+//  /guild
+// ----------------------
 app.get("/guild", async (req, res) => {
     const guild = req.query.name || "Sleepers";
     const url = `https://www.tibia.com/community/?subtopic=guilds&page=view&GuildName=${encodeURIComponent(guild)}`;
@@ -31,7 +34,16 @@ app.get("/guild", async (req, res) => {
             guild,
             members
         });
-        app.get("/debug", async (req, res) => {
+
+    } catch (err) {
+        res.json({ error: "Proxy error", details: err.toString() });
+    }
+});
+
+// ----------------------
+//  /debug
+// ----------------------
+app.get("/debug", async (req, res) => {
     const guild = req.query.name || "Sleepers";
     const url = `https://www.tibia.com/community/?subtopic=guilds&page=view&GuildName=${encodeURIComponent(guild)}`;
 
@@ -45,13 +57,6 @@ app.get("/guild", async (req, res) => {
     }
 });
 
-
-    } catch (err) {
-        res.json({ error: "Proxy error", details: err.toString() });
-    }
-});
-
 app.listen(PORT, () => {
     console.log(`Proxy running on port ${PORT}`);
 });
-
