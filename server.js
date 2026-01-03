@@ -31,6 +31,20 @@ app.get("/guild", async (req, res) => {
             guild,
             members
         });
+        app.get("/debug", async (req, res) => {
+    const guild = req.query.name || "Sleepers";
+    const url = `https://www.tibia.com/community/?subtopic=guilds&page=view&GuildName=${encodeURIComponent(guild)}`;
+
+    try {
+        const response = await fetch(url, { headers: HEADERS });
+        const html = await response.text();
+
+        res.send(html.slice(0, 1000)); // pokaż pierwsze 1000 znaków
+    } catch (err) {
+        res.send("Error: " + err.toString());
+    }
+});
+
 
     } catch (err) {
         res.json({ error: "Proxy error", details: err.toString() });
@@ -40,3 +54,4 @@ app.get("/guild", async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Proxy running on port ${PORT}`);
 });
+
