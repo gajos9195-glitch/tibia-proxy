@@ -4,35 +4,44 @@ import fetch from "node-fetch";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.5",
-    "Connection": "keep-alive"
-};
+// ----------------------
+//  1. TibiaData API
+// ----------------------
+async function fetchFromTibiaData(guild) {
+    const url = `https://api.tibiadata.com/v4/guild/${encodeURIComponent(guild)}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (!data.guild || !data.guild.members) return null;
+
+    return data.guild.members.map(m => ({
+        name: m.name,
+        rank: m.rank,
+        level: m.level,
+        vocation: m.vocation,
+        joined: m.joined
+    }));
+}
 
 // ----------------------
-//  /guild
+//  /guild endpoint
 // ----------------------
 app.get("/guild", async (req, res) => {
     const guild = req.query.name || "Sleepers";
-    const url = `https://www.tibia.com/community/?subtopic=guilds&page=view&GuildName=${encodeURIComponent(guild)}`;
 
     try {
-        const response = await fetch(url, { headers: HEADERS });
-        const html = await response.text();
+        // 1. Spróbuj TibiaData (bez Cloudflare)
+        const members = await fetchFromTibiaData(guild);
 
-        const regex = /\?subtopic=characters&amp;name=([^"]+)">([^<]+)<\/a>/g;
-        const members = [];
-        let match;
-
-        while ((match = regex.exec(html)) !== null) {
-            members.push({ name: match[2] });
+        if (members && members.length > 0) {
+            return res.json({ guild, members });
         }
 
-        res.json({
+        // 2. Jeśli API nie działa → fallback
+        return res.json({
             guild,
-            members
+            members: [],
+            warning: "Tibia.com blocked the request (Cloudflare). TibiaData fallback returned no members."
         });
 
     } catch (err) {
@@ -41,22 +50,6 @@ app.get("/guild", async (req, res) => {
 });
 
 // ----------------------
-//  /debug
-// ----------------------
-app.get("/debug", async (req, res) => {
-    const guild = req.query.name || "Sleepers";
-    const url = `https://www.tibia.com/community/?subtopic=guilds&page=view&GuildName=${encodeURIComponent(guild)}`;
-
-    try {
-        const response = await fetch(url, { headers: HEADERS });
-        const html = await response.text();
-
-        res.send(html.slice(0, 1000)); // pokaż pierwsze 1000 znaków
-    } catch (err) {
-        res.send("Error: " + err.toString());
-    }
-});
-
 app.listen(PORT, () => {
     console.log(`Proxy running on port ${PORT}`);
 });
