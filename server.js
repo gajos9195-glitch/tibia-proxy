@@ -139,3 +139,10 @@ app.get("/guild/online", async (req, res) => {
         res.json({ error: "Proxy error", details: err.toString() });
     }
 });
+
+// ----------------------
+//  Start server
+// ----------------------
+app.listen(PORT, () => {
+    console.log(`Proxy running on port ${PORT}`);
+});
